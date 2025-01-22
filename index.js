@@ -1,4 +1,4 @@
-// console.log('welcome to Backend Todo services');
+
 import express, { response } from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
@@ -28,9 +28,8 @@ mongoose.connect(DATABASE_URI).then(() => {
 
 app.post("/register", async (request, response) => {
     try {
-        let { firstName, lastName, password, confirmPassword, email, mobile, address, city, dob } = request.body;
+        let { firstName, lastName, password, confirmPassword, email, mobile, address, city, dob, gender } = request.body;
         let exists = await registerModel.findOne({ email });
-        console.log("user exists", exists)
         if (exists) {
             return response.status(400).json({ message: 'user Already exists' })
         }
@@ -47,7 +46,6 @@ app.post("/register", async (request, response) => {
             response.status(200).json({ message: 'Registered successfully' })
         }
     } catch (error) {
-        console.log(error)
         response.status(400).json({ message: 'Registration error | Server Low !' })
     }
 });
@@ -65,7 +63,6 @@ app.post("/login", async (request, response) => {
         else return response.status(200).json({ message: 'Login Successfull', currentUserId : existUser._id })
     }
     catch (error) {
-        console.log(error);
         response.status(500).json({ message: "Server Error, please try after some time" });
     }
 })
@@ -113,7 +110,6 @@ app.post("/post-todo/:userId", async (request, response) => {
         return response.status(200).json(userTodos);
 
     } catch (error) {
-        console.error(error);
         response.status(500).json({ message: "Server Error, please try again later" });
     }
 });
@@ -145,7 +141,6 @@ app.put("/edit-todo/:userId/:todoId/:status?", async (request, response) => {
         const getEditedTodos = await todoModel.find({ userId })
         response.status(200).json({ message: "Todo updated successfully", getEditedTodos });
     } catch (error) {
-        console.error("Error editing todo:", error);
         response.status(500).json({ message: "Server error, please try again later" });
     }
 });
@@ -170,7 +165,6 @@ app.delete("/delete-todo/:userId/:todoId", async (request, response) => {
         const getUpadtedTodos = await todoModel.find({ userId })
         response.status(200).json({ message: "Todo deleted successfully", getUpadtedTodos });
     } catch (error) {
-        console.error("Error deleting todo:", error);
         response.status(500).json({ message: "Server error, please try again later" });
     }
 });
@@ -178,8 +172,6 @@ app.delete("/delete-todo/:userId/:todoId", async (request, response) => {
 app.get("/get-current-user/:userId", async (request, response) => {
     try {
         const { userId } = request.params;
-        console.log(userId);
-
         if (!mongoose.Types.ObjectId.isValid(userId)) {
             return response.status(400).json({ message: "Invalid user ID" });
         }
@@ -190,7 +182,6 @@ app.get("/get-current-user/:userId", async (request, response) => {
         }
     }
     catch (error) {
-        console.log(error);
         response.status(400).json({ message: "user Not Found" });
     }
 })
@@ -204,7 +195,6 @@ app.get("/todos/completed/:userId", async (request, response) => {
         const completedTodos = allTodos[0].todos.todo.filter((todo) => todo.status === "Completed");
         response.status(200).json({ message: "Completed todos fetched successfully", completedTodos });
     } catch (error) {
-        console.error("Error fetching completed todos:", error);
         response.status(500).json({ message: "Server error, please try again later" });
     }
 });
@@ -219,7 +209,20 @@ app.get("/todos/pending/:userId", async (request, response) => {
         const pendingTodos = allTodos[0].todos.todo.filter((todo) => todo.status === "Active");
         response.status(200).json({ message: "Completed todos fetched successfully", pendingTodos });
     } catch (error) {
-        console.error("Error fetching completed todos:", error);
         response.status(500).json({ message: "Server error, please try again later" });
+    }
+});
+
+app.delete("/deleteUser/:id", async (request, response) => {
+    try {
+        const { id } = request.params; // Get the ID from the URL parameters
+        let user = await registerModel.findById(id);
+        if (!user) {
+            return response.status(404).json({ message: "User not found" });
+        }
+        await registerModel.findByIdAndDelete(id);
+        response.status(200).json({ message: "User deleted successfully" });
+    } catch (error) {
+        response.status(500).json({ message: "Error deleting user | Server issue!" });
     }
 });
